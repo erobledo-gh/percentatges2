@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descobreix la Imatge - Proporcionalitat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .game-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        
+        .questions-panel {
+            flex: 1;
+            min-width: 350px;
+        }
+        
+        .grid-panel {
+            flex: 1;
+        }
+        
+        .question-section {
+            margin-bottom: 15px;
+            padding: 15px 20px;
+            background: #f0f4f8;
+            border-radius: 10px;
+            border-left: 5px solid #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .question-section:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .question-section.selected {
+            background: #0093E9;
+            border-left-color: #80D0C7;
+        }
+        
+        .question-section.completed {
+            background: #c6f6d5;
+            border-left-color: #22543d;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .question {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .question-section.selected .question {
+            color: white;
+        }
+        
+        .question-section.completed .question {
+            color: #22543d;
+        }
+        
+        .grid-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 0 auto;
+        }
+        
+        .background-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500&h=500&fit=crop') center/cover;
+            border-radius: 10px;
+        }
+        
+        .grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5px;
+            padding: 5px;
+        }
+        
+        .cell {
+            background: #2d3748;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.5s;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            padding: 10px;
+        }
+        
+        .cell:hover:not(.revealed) {
+            transform: scale(1.05);
+            background: #4a5568;
+        }
+        
+        .cell.revealed {
+            background: transparent;
+            color: transparent;
+            pointer-events: none;
+        }
+        
+        .cell.incorrect {
+            animation: shake 0.5s;
+        }
+        
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #e6fffa;
+            color: #234e52;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            animation: pulse 0.5s;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            animation: shake 0.5s;
+        }
+        
+        .victory {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .victory h2 {
+            color: #0093E9;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .victory button {
+            padding: 15px 30px;
+            background: #0093E9;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Descobreix la Imatge - Proporcionalitat i Percentatges</h1>
+    
+    <div class="game-container">
+        <div class="questions-panel">
+            <h2 style="color: #0093E9; margin-bottom: 20px;">📝 Preguntes</h2>
+            <div id="questions-container"></div>
+        </div>
+        
+        <div class="grid-panel">
+            <h2 style="color: #0093E9; margin-bottom: 20px;">🎯 Tauler de Respostes</h2>
+            <div class="grid-container">
+                <div class="background-image"></div>
+                <div class="grid" id="grid"></div>
+            </div>
+            <div class="status" id="status">Selecciona una pregunta de l'esquerra</div>
+        </div>
+    </div>
+    
+    <div class="victory" id="victory">
+        <h2>🎉 Enhorabona!</h2>
+        <p>Has completat totes les preguntes correctament</p>
+        <button onclick="location.reload()">Jugar de nou</button>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "Si 6 pizzes alimenten 24 persones, quantes pizzes necessito per a 40 persones?",
+                a: "10",
+                pos: 0
+            },
+            {
+                q: "El 18% de 350 és:",
+                a: "63",
+                pos: 1
+            },
+            {
+                q: "Una jaqueta costa 95€ amb un descompte del 40%. Quin és el preu final?",
+                a: "57",
+                pos: 2
+            },
+            {
+                q: "Si 15 jugadors necessiten 45 pilotes per entrenar, quantes pilotes necessiten 8 jugadors?",
+                a: "24",
+                pos: 3
+            },
+            {
+                q: "Quin percentatge és 56 de 160?",
+                a: "35",
+                pos: 4
+            },
+            {
+                q: "Si 9 pastissos pesen 27 kg, quant pesen 13 pastissos?",
+                a: "39",
+                pos: 5
+            },
+            {
+                q: "Un videojoc costa 60€. Si augmenta un 25%, quin és el nou preu?",
+                a: "75",
+                pos: 6
+            },
+            {
+                q: "El 70% de 90 és:",
+                a: "63",
+                pos: 7
+            },
+            {
+                q: "Si 4 jardiners tarden 14 dies a arranjar un parc, quants dies tardaran 7 jardiners?",
+                a: "8",
+                pos: 8
+            }
+        ];
+
+        let selectedQuestion = null;
+        let revealedCells = 0;
+        const completedQuestions = new Set();
+
+        function init() {
+            const container = document.getElementById('questions-container');
+            questions.forEach((item, index) => {
+                const section = document.createElement('div');
+                section.className = 'question-section';
+                section.dataset.index = index;
+                section.innerHTML = `<div class="question">${index + 1}. ${item.q}</div>`;
+                section.addEventListener('click', () => selectQuestion(index, section));
+                container.appendChild(section);
+            });
+
+            const grid = document.getElementById('grid');
+            const shuffledAnswers = [...questions].sort(() => Math.random() - 0.5);
+            
+            shuffledAnswers.forEach((item, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = item.a;
+                cell.dataset.questionIndex = item.pos;
+                cell.addEventListener('click', handleCellClick);
+                grid.appendChild(cell);
+            });
+        }
+
+        function selectQuestion(index, element) {
+            if (completedQuestions.has(index)) {
+                document.getElementById('status').textContent = 'Aquesta pregunta ja està completada ✓';
+                document.getElementById('status').className = 'status success';
+                return;
+            }
+
+            document.querySelectorAll('.question-section').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            selectedQuestion = index;
+            
+            document.getElementById('status').textContent = 
+                `Pregunta ${index + 1} seleccionada. Ara fes clic a la resposta correcta del tauler`;
+            document.getElementById('status').className = 'status';
+        }
+
+        function handleCellClick(e) {
+            if (e.target.classList.contains('revealed')) {
+                return;
+            }
+
+            if (selectedQuestion === null) {
+                document.getElementById('status').textContent = 'Primer selecciona una pregunta de l\'esquerra!';
+                document.getElementById('status').className = 'status error';
+                return;
+            }
+
+            const questionIndex = parseInt(e.target.dataset.questionIndex);
+            
+            if (questionIndex === selectedQuestion) {
+                e.target.classList.add('revealed');
+                const answer = e.target.textContent;
+                setTimeout(() => {
+                    e.target.textContent = '';
+                }, 500);
+                
+                completedQuestions.add(selectedQuestion);
+                
+                const questionElement = document.querySelector(`[data-index="${selectedQuestion}"]`);
+                questionElement.classList.remove('selected');
+                questionElement.classList.add('completed');
+                
+                document.getElementById('status').textContent = `Correcte! ✓ ${answer}`;
+                document.getElementById('status').className = 'status success';
+                
+                revealedCells++;
+                selectedQuestion = null;
+                
+                if (revealedCells === 9) {
+                    setTimeout(() => {
+                        document.getElementById('victory').style.display = 'block';
+                    }, 500);
+                }
+            } else {
+                e.target.classList.add('incorrect');
+                setTimeout(() => {
+                    e.target.classList.remove('incorrect');
+                }, 500);
+                
+                document.getElementById('status').textContent = '❌ Incorrecte. Intenta amb una altra resposta';
+                document.getElementById('status').className = 'status error';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
